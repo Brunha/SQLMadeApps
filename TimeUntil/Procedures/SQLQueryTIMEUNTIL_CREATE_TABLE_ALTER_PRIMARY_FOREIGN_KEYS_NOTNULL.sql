@@ -67,3 +67,47 @@ CONSTRAINT FK_DateSpan_Routine FOREIGN KEY (DateSpanID) REFERENCES DateSpan,
 CONSTRAINT FK_Weekdays_Routine FOREIGN KEY (WeekDaysID) REFERENCES WeekDays,
 CONSTRAINT FK_SavedLastTimeType_Routine FOREIGN KEY (SavedLastTimeTypeID) REFERENCES SavedLastTimeType
 )
+
+CREATE TABLE UserLimit
+(
+UserLimitID int IDENTITY(1,1) PRIMARY KEY NOT NULL,
+UserID int NOT NULL,
+Paid BIT NOT NULL,
+ProgramsCount INT NOT NULL,
+UserRoutinesCount INT NOT NULL,
+UserTimeCount INT NOT NULL
+CONSTRAINT FK_UserLimit FOREIGN KEY(UserID) REFERENCES Users
+)
+
+CREATE TABLE UserLogOn
+(
+UserLogID INT IDENTITY(1,1) PRIMARY KEY NOT NULL,
+UserID INT NOT NULL,
+RandomKey VARBINARY(32),
+CONSTRAINT FK_LogOnUser FOREIGN KEY(UserID) REFERENCES Users
+)
+
+CREATE TABLE UserLogs
+(
+UserLogsID INT IDENTITY(1,1) PRIMARY KEY NOT NULL,
+UserID INT NOT NULL,
+LogInDate DATETIME NOT NULL,
+LogOffDate DATETIME NOT NULL DEFAULT DATEADD(DAY, 2, GETDATE()),
+CONSTRAINT FK_LogsUser FOREIGN KEY (UserID) REFERENCES Users
+)
+
+CREATE TRIGGER SetLogOffTime
+ON UserLogs
+AFTER INSERT
+AS
+BEGIN
+	UPDATE UserLogs SET LogOffDate = DATEADD(DAY,2, LogInDate)
+	FROM UserLogs
+	WHERE LogOffDate IS NULL
+	AND UserLogsID IN (SELECT UserLogsID FROM inserted);
+
+	--AND OrderID IN (SELECT OrderID FROM inserted): Ensures that only the newly inserted 
+	--rows are affected by the update.
+	--By including the OrderID IN (SELECT OrderID FROM inserted) clause,
+	--you make sure the trigger only updates the DeliveryDate for the rows that were just inserted.
+END

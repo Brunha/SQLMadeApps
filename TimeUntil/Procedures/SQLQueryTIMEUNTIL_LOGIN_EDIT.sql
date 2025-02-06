@@ -153,3 +153,26 @@ BEGIN
 			END
 	END
 END;
+
+
+SELECT NEWID() AS UNIQUEVALUE
+
+SELECT CHECKSUM('Hello') AS CHECKSUMVALUE
+
+SELECT ABS(NEWID()) AS ABSVALUE
+
+SELECT ABS(CHECKSUM(NEWID())) AS RandomNumber
+
+CREATE PROCEDURE GenerateSecureValue
+AS
+BEGIN
+    DECLARE @RandomNumber INT = ABS(CHECKSUM(NEWID()));
+    DECLARE @Salt VARBINARY(16);	-- CHAR(36) = CONVERT(CHAR(36), NEWID());
+    DECLARE @ConcatenatedValue VARCHAR(150) = CONCAT(CAST(@RandomNumber AS VARCHAR(11)),
+	CAST(@Salt AS VARCHAR(128)));		--	CONCAT(@RandomNumber, @Salt);
+    DECLARE @HashedValue VARBINARY(32) = HASHBYTES('SHA2_256', @ConcatenatedValue);
+
+	SELECT @Salt = UserPasswordSalt FROM Users
+
+    SELECT @RandomNumber AS RandomNumber, @Salt AS Salt, @HashedValue AS HashedValue;
+END;
